@@ -22,6 +22,45 @@
 import random
 
 
+def primos_en_rango(lim_inferior, lim_superior):
+    """
+    Genera una lista de números primos dentro de un rango dado.
+
+    Parámetros:
+    inicio (int): Límite inferior del rango.
+    fin (int): Límite superior del rango.
+
+    Retorna:
+    list: Lista de números primos dentro del rango [inicio, fin].
+    """
+    primos = []
+    for num in range(lim_inferior, lim_superior + 1):
+        if es_primo(num):
+            primos.append(num)
+    return primos
+
+
+def primo_aleatorio_en_rango(inicio, fin):
+    """
+    Selecciona un número primo aleatorio dentro de un rango especificado.
+
+    Parámetros:
+    inicio (int): El límite inferior del rango.
+    fin (int): El límite superior del rango.
+
+    Regresa:
+    int: Un número primo seleccionado aleatoriamente dentro del rango.
+
+    Lanza:
+    ValueError: Si no hay números primos en el rango especificado.
+    """
+    primos = primos_en_rango(
+        inicio, fin)  # Obtenemos una lista de números primos en el rango
+    if not primos:
+        raise ValueError(f"No hay números primos en el rango {inicio} a {fin}")
+    return random.choice(primos)  # Seleccionamos y retornamos un primo al azar
+
+
 def mcd(a, b):
     """
     Calcula el máximo común divisor (MCD) de dos números enteros utilizando el algoritmo de Euclides.
@@ -75,60 +114,34 @@ def inverso_modular(e, n):
     return t  # Retornamos el inverso modular de e módulo n
 
 
-def primo_aleatorio_en_rango(inicio, fin):
-    """
-    Selecciona un número primo aleatorio dentro de un rango especificado.
-
-    Parámetros:
-    inicio (int): El límite inferior del rango.
-    fin (int): El límite superior del rango.
-
-    Regresa:
-    int: Un número primo seleccionado aleatoriamente dentro del rango.
-
-    Lanza:
-    ValueError: Si no hay números primos en el rango especificado.
-    """
-    primos = primos_en_rango(
-        inicio, fin)  # Obtenemos una lista de números primos en el rango
-    if not primos:
-        raise ValueError(f"No hay números primos en el rango {inicio} a {fin}")
-    return random.choice(primos)  # Seleccionamos y retornamos un primo al azar
-
-
-def primos_en_rango(lim_inferior, lim_superior):
-    """
-    Genera una lista de números primos dentro de un rango dado.
-
-    Parámetros:
-    inicio (int): Límite inferior del rango.
-    fin (int): Límite superior del rango.
-
-    Retorna:
-    list: Lista de números primos dentro del rango [inicio, fin].
-    """
-    primos = []
-    for num in range(lim_inferior, lim_superior + 1):
-        if es_primo(num):
-            primos.append(num)
-    return primos
-
-
 def es_primo(num):
     """
     Determina si un número es primo.
 
+    Un número primo es un número mayor que 1 que solo es divisible por 1 y por sí mismo.
+
     Parámetros:
-    num (int): El número a verificar.
+    num (int): El número entero que se desea verificar.
 
     Retorna:
-    bool: True si el número es primo, False de lo contrario.
+    bool: 
+        - True si el número es primo.
+        - False si el número no es primo.
     """
+
+    # Un número menor o igual a 1 no es primo por definición.
     if num <= 1:
         return False
+
+    # Iteramos desde 2 hasta la raíz cuadrada del número (inclusive).
+    # Esto se debe a que cualquier factor mayor que la raíz cuadrada
+    # tendrá un factor complementario menor que la raíz cuadrada.
     for i in range(2, int(num ** 0.5) + 1):
+        # Si el número es divisible por 'i', no es primo.
         if num % i == 0:
             return False
+
+    # Si no se encontró ningún divisor, el número es primo.
     return True
 
 
@@ -146,30 +159,48 @@ def generar_llaves(rango_inferior, rango_superior):
     Lanza:
     ValueError: Si no es posible encontrar dos números primos diferentes en el rango especificado.
     """
-    p = primo_aleatorio_en_rango(
-        rango_inferior, rango_superior)  # Seleccionamos el primer número primo 'p'
-    # Seleccionamos el segundo número primo 'q'
+
+    # Seleccionamos el primer número primo aleatorio 'p' en el rango dado.
+    p = primo_aleatorio_en_rango(rango_inferior, rango_superior)
+
+    # Seleccionamos un segundo número primo aleatorio 'q'.
     q = primo_aleatorio_en_rango(rango_inferior, rango_superior)
+    # Contador para limitar el número de intentos de encontrar un 'q' diferente.
     count = 0
-    while q == p:  # Aseguramos que 'p' y 'q' sean diferentes
-        if count > 100:
+
+    # Aseguramos que 'p' y 'q' sean diferentes.
+    while q == p:
+        if count > 100:  # Limitar el número de intentos para evitar un bucle infinito.
             raise ValueError(
                 "No se puede encontrar dos números primos diferentes")
         q = primo_aleatorio_en_rango(rango_inferior, rango_superior)
         count += 1
-    n = p * q  # Calculamos 'n' como el producto de 'p' y 'q'
-    phi = (p - 1) * (q - 1)  # Calculamos la función totiente de Euler 'phi'
 
-    e = 0
-    # Buscamos un 'e' tal que el MCD de 'e' y 'phi' sea 1
+    # Calculamos 'n' como el producto de los dos números primos.
+    n = p * q
+
+    # Calculamos la función totiente de Euler 'phi', que es (p-1) * (q-1).
+    phi = (p - 1) * (q - 1)
+
+    e = 0  # Inicializamos 'e', que será parte de la clave pública.
+
+    # Buscamos un número 'e' tal que el máximo común divisor (MCD) de 'e' y 'phi' sea 1.
+    # Esto asegura que 'e' sea coprimo con 'phi'.
+    # Iteramos desde 6 hasta 'phi - 1' para buscar un valor válido de 'e'.
     for i in range(6, phi - 1):
-        maximo = mcd(i, phi)
-        if maximo == 1:
-            e = i  # Encontramos un 'e' que cumple con la condición
-            break
-    # Calculamos el inverso modular de 'e' módulo 'phi'
+        maximo = mcd(i, phi)  # Calculamos el MCD de 'i' y 'phi'.
+        if maximo == 1:  # Si el MCD es 1, hemos encontrado un valor válido de 'e'.
+            e = i
+            break  # Salimos del bucle al encontrar el primer valor válido.
+
+    # Calculamos 'd', que es el inverso modular de 'e' módulo 'phi'.
+    # Esto asegura que (e * d) % phi = 1, lo cual es fundamental para la desencriptación.
     d = inverso_modular(e, phi)
-    return (e, n), (d, n)  # Retornamos la clave pública y la clave privada
+
+    # Retornamos un par de claves:
+    # - Clave pública: (e, n)
+    # - Clave privada: (d, n)
+    return (e, n), (d, n)
 
 
 def encriptar(caracter, llave_publica):
@@ -232,7 +263,7 @@ if __name__ == "__main__":
         # Solicitar al usuario que ingrese el mensaje original
         while True:
             mensaje_original_str = input(
-                f"Introduce el mensaje original (un número entero entre 0 y {n-1}): ")
+                f"Introduce el mensaje original (un número entero entre 0 y {n-2}): ")
 
             try:
                 # Convertir el mensaje a entero
@@ -240,11 +271,11 @@ if __name__ == "__main__":
                 print(f"Mensaje original: {mensaje_original}")
 
                 # Comprobar si el mensaje está dentro del rango válido
-                if 0 <= mensaje_original < n:
+                if 0 <= mensaje_original < n-1:
                     break  # Salir del bucle si el mensaje es válido
                 else:
                     print(f"Error: El mensaje debe ser un número entre 0 y {
-                          n-1}. Intenta de nuevo.")
+                          n-2}. Intenta de nuevo.")
             except ValueError:
                 print("Error: El mensaje debe ser un número entero válido.")
 
